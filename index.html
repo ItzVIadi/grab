@@ -29,7 +29,12 @@
       const r = await fetch(API + '?t=' + Date.now(), { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' });
       const j = await r.json();
       const data = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g, '')))));
+      let alive = false;
       if (data.url && /^https:\/\/[a-z0-9-]+\.trycloudflare\.com\/?$/.test(data.url) && Date.now() - data.at < MAX_AGE) {
+        // läuft die Sitzung wirklich noch? (der Server liefert version.json mit CORS)
+        try { alive = (await fetch(data.url.replace(/\/?$/, '/') + 'version.json?t=' + Date.now(), { cache: 'no-store' })).ok; } catch (e) { alive = false; }
+      }
+      if (alive) {
         msg.textContent = 'Spiel gefunden. Du wirst verbunden …';
         extra.textContent = '';
         const a = document.createElement('a'); a.className = 'btn'; a.href = data.url; a.textContent = 'Falls nichts passiert: hier klicken'; extra.appendChild(a);
